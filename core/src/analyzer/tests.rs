@@ -4,6 +4,10 @@ fn analyzer() -> Analyzer {
     Analyzer::new()
 }
 
+fn full_analyzer() -> Analyzer {
+    Analyzer::full()
+}
+
 fn first_noun(word: &str) -> MorphAnalysis {
     let a = analyzer();
     let results = a.analyze(word);
@@ -555,4 +559,69 @@ fn pronoun_olar_accusative() {
     let r = first_pronoun("оларды");
     assert_eq!(r.lemma, "олар");
     assert_eq!(r.features.case, Some(Case::Accusative));
+}
+
+// Full lexicon tests
+
+#[test]
+fn full_lexicon_loads() {
+    let a = full_analyzer();
+    let r = a.analyze("мектеп");
+    assert!(!r.is_empty());
+}
+
+#[test]
+fn full_baurysak() {
+    let a = full_analyzer();
+    let r = a.analyze("бауырсақ");
+    let noun = r.iter().find(|x| x.pos == Pos::Noun);
+    assert!(noun.is_some());
+    assert_eq!(noun.unwrap().lemma, "бауырсақ");
+}
+
+#[test]
+fn full_janym() {
+    let a = full_analyzer();
+    let r = a.analyze("жаным");
+    let noun = r.iter().find(|x| x.pos == Pos::Noun);
+    assert!(noun.is_some());
+    assert_eq!(noun.unwrap().lemma, "жан");
+    assert_eq!(noun.unwrap().features.possession, Some(Possession::P1Sg));
+}
+
+#[test]
+fn full_verb_oqydy() {
+    let a = full_analyzer();
+    let r = a.analyze("оқыды");
+    let verb = r.iter().find(|x| x.pos == Pos::Verb);
+    assert!(verb.is_some());
+    assert_eq!(verb.unwrap().lemma, "оқы");
+    assert_eq!(verb.unwrap().features.tense, Some(Tense::PastDefinite));
+}
+
+#[test]
+fn full_kitaptarda() {
+    let a = full_analyzer();
+    let r = a.analyze("кітаптарда");
+    let noun = r.iter().find(|x| x.pos == Pos::Noun);
+    assert!(noun.is_some());
+    assert_eq!(noun.unwrap().lemma, "кітап");
+    assert_eq!(noun.unwrap().features.number, Some(Number::Plural));
+    assert_eq!(noun.unwrap().features.case, Some(Case::Locative));
+}
+
+#[test]
+fn full_no_false_positive() {
+    let a = full_analyzer();
+    let r = a.analyze("ывапывап");
+    assert!(r.is_empty());
+}
+
+#[test]
+fn full_adjective() {
+    let a = full_analyzer();
+    let r = a.analyze("әдемі");
+    let adj = r.iter().find(|x| x.pos == Pos::Adjective);
+    assert!(adj.is_some());
+    assert_eq!(adj.unwrap().lemma, "әдемі");
 }
