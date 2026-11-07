@@ -21,7 +21,7 @@ For a computer, `жүрек` and `жүректерімізде` are unrelated st
 
 I guess without structural understanding of words, every downstream tool for Kazakh is either broken or faking it.
 
-This tool is here to fix this.
+Existing tools either need a full FST toolchain (Apertium) or are unmaintained research code (KazNLP). kaz-morph is a library you actually install and use.
 
 ## Quick Start
 
