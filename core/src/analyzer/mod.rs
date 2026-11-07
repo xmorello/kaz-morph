@@ -24,7 +24,7 @@ impl Analyzer {
     }
 
     pub fn full() -> Self {
-        let data = include_str!("../../../data/lexicon/apertium.tsv");
+        let data = include_str!("../../data/lexicon.tsv");
         let mut lexicon = Lexicon::from_tsv(data);
 
         for stem in ["мен", "сен", "ол", "біз", "сіз", "олар"] {
@@ -92,7 +92,7 @@ impl Analyzer {
 
         results
     }
-
+    #[allow(clippy::unused_self)]
     /// Generate stem variants by reversing consonant mutations.
     fn stem_variants(&self, stem: &str) -> Vec<String> {
         let mut variants = vec![stem.to_string()];

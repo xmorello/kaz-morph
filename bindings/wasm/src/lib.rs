@@ -28,7 +28,6 @@ impl Analyzer {
         }
     }
 
-    /// Analyze a word, returns a JS array of objects.
     pub fn analyze(&self, word: &str) -> JsValue {
         let results: Vec<MorphResult> = self.inner
             .analyze(word)
@@ -47,5 +46,11 @@ impl Analyzer {
             .collect();
 
         serde_wasm_bindgen::to_value(&results).unwrap()
+    }
+}
+
+impl Default for Analyzer {
+    fn default() -> Self {
+        Self::new()
     }
 }
