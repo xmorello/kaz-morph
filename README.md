@@ -40,11 +40,11 @@ let results = analyzer.analyze("мұғалімдерімізге");
 
 ## Features
 
-- **Nouns**: 7 cases, plural, 6 possessive forms, consonant mutations (п→б, к→г, қ→ғ)
+- **Nouns**: 7 cases, plural, 6 possessive forms, consonant mutations (п->б, к->г, қ->ғ)
 - **Verbs**: 7 tenses, negation, 4 voices (passive, causative, reflexive, collective), person/number
 - **Adjectives**: bare and substantivized with full noun morphology
 - **Adverbs**: lexicon lookup
-- **Pronouns**: irregular declension table (мен→маған, сен→саған, ол→оған)
+- **Pronouns**: irregular declension table (мен->маған, сен->саған, ол->оған)
 - **Phonology**: vowel harmony and consonant harmony validation
 - **Lexicon**: 22,610 stems from Apertium-kaz
 
