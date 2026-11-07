@@ -53,7 +53,7 @@ const VOICELESS: &[char] = &['п', 'ф', 'қ', 'к', 'т', 'с', 'ш', 'ч', 'х
 /// may mix groups (e.g., мұғалім — back then front),
 /// but the last syllable still wins.
 pub fn vowel_group(stem: &str) -> Option<VowelGroup> {
-    stem.chars().rev().find_map(|c| classify_vowel(c))
+        stem.chars().rev().find_map(classify_vowel)
 }
 
 /// Classify a single character as Back or Front vowel.
@@ -90,10 +90,7 @@ pub fn stem_end(stem: &str) -> StemEnd {
         StemEnd::Vowel
     } else {
         match classify_consonant(last) {
-            Some(ConsonantClass::Voiceless) => StemEnd::Voiceless,
-            Some(_) => StemEnd::SonorousOrVoiced,
-            // Unknown chars (e.g. Russian letters in loans) — default to voiced
-            None => StemEnd::SonorousOrVoiced,
+        Some(_) | None => StemEnd::SonorousOrVoiced,
         }
     }
 }
@@ -155,21 +152,18 @@ pub fn is_valid_suffix(stem: &str, suffix: &str) -> bool {
             // Instrumental -мен/-бен/-пен is always front, skip harmony check
             if suffix != "мен" && suffix != "бен" && suffix != "пен"
                 && suffix != "менен" && suffix != "бенен" && suffix != "пенен"
+                && stem_group != suffix_group
             {
-                if stem_group != suffix_group {
-                    return false;
-                }
+                return false;
             }
         }
     }
 
     // Check consonant harmony: suffix-initial consonant must match stem-final class
     let s_end = stem_end(stem);
-    let suffix_first = match suffix.chars().next() {
-        Some(c) => c,
-        None => return true,
+    let Some(suffix_first) = suffix.chars().next() else {
+        return true;
     };
-
     match suffix_first {
         // д/т alternation: д after vowels and voiced, т after voiceless
         'д' => s_end != StemEnd::Voiceless,

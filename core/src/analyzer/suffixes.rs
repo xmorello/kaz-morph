@@ -2,6 +2,7 @@ use crate::types::*;
 use crate::phonology;
 use super::Analyzer;
 
+#[allow(clippy::unused_self)]
 impl Analyzer {
     pub(super) fn strip_case<'a>(&self, word: &'a str) -> Vec<(&'a str, Option<Case>)> {
         let table: &[(&[&str], Case)] = &[

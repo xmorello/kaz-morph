@@ -52,7 +52,7 @@ impl Analyzer {
                     };
 
                     let suffix_len = stem.len().abs_diff(variant.len());
-                    let score = 0.5 + (suffix_len as f32 * 0.05);
+                    let score = (suffix_len as f32).mul_add(0.05, 0.5);
 
                     results.push(MorphAnalysis {
                         lemma: e.lemma.clone(),

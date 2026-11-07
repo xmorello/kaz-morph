@@ -92,7 +92,7 @@ impl Analyzer {
 
         results
     }
-
+    #[allow(clippy::unused_self)]
     /// Generate stem variants by reversing consonant mutations.
     fn stem_variants(&self, stem: &str) -> Vec<String> {
         let mut variants = vec![stem.to_string()];
