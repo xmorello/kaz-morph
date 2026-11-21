@@ -41,12 +41,14 @@ let results = analyzer.analyze("мұғалімдерімізге");
 ## Features
 
 - **Nouns**: 7 cases, plural, 6 possessive forms, consonant mutations (п->б, к->г, қ->ғ)
-- **Verbs**: 7 tenses, negation, 4 voices (passive, causative, reflexive, collective), person/number
+- **Verbs**: 7 tense labels, conditional mood, negation, 4 voices (passive, causative, reflexive, collective), person/number
 - **Adjectives**: bare and substantivized with full noun morphology
 - **Adverbs**: lexicon lookup
 - **Pronouns**: irregular declension table (мен->маған, сен->саған, ол->оған)
 - **Phonology**: vowel harmony and consonant harmony validation
 - **Lexicon**: 22,610 stems from Apertium-kaz
+
+The definite past and conditional share short personal endings. For example, `бардыңыз` and `барсаңыз` both carry polite second-person singular agreement. The first has `tense = PastDefinite` and the second has `mood = Conditional`. The zero ending in `барды` and `барса` leaves person and number unspecified in the API.
 
 ## Performance
 
