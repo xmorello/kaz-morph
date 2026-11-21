@@ -447,6 +447,56 @@ fn verb_past_2pl() {
 }
 
 #[test]
+fn definite_past_personal_endings() {
+    let mut verbs = Lexicon::new();
+    for lemma in ["бар", "кел", "айт", "іш"] {
+        verbs.insert(lemma, Pos::Verb);
+    }
+    let cases = [
+        ("бар", "бардым", "бардымын", Person::First, Number::Singular),
+        ("бар", "бардым", "бардымін", Person::First, Number::Singular),
+        ("кел", "келдің", "келдісің", Person::Second, Number::Singular),
+        ("кел", "келдік", "келдіміз", Person::First, Number::Plural),
+        ("бар", "бардыңдар", "бардысыңдар", Person::Second, Number::Plural),
+        ("айт", "айттық", "айттык", Person::First, Number::Plural),
+        ("іш", "іштік", "іштіқ", Person::First, Number::Plural),
+        ("бар", "бардыңдар", "бардыңдер", Person::Second, Number::Plural),
+        ("кел", "келдіңдер", "келдіңдар", Person::Second, Number::Plural),
+        ("кел", "келмедіңдер", "келмедіңдар", Person::Second, Number::Plural),
+    ];
+    for a in [Analyzer::with_lexicon(verbs), full_analyzer()] {
+        for (lemma, valid, invalid, person, number) in cases {
+            let is_past = |r: &MorphAnalysis| {
+                r.lemma == lemma
+                    && r.pos == Pos::Verb
+                    && r.features.tense == Some(Tense::PastDefinite)
+            };
+            assert!(
+                a.analyze(valid).iter().any(|r| {
+                    is_past(r)
+                        && r.features.person == Some(person)
+                        && r.features.number == Some(number)
+                }),
+                "missing definite past reading of {valid}"
+            );
+            assert!(
+                !a.analyze(invalid).iter().any(is_past),
+                "unexpected definite past reading of {invalid}"
+            );
+        }
+    }
+}
+
+#[test]
+fn narrative_past_keeps_long_personal_endings() {
+    let r = first_verb("барғанмын");
+    assert_eq!(r.lemma, "бар");
+    assert_eq!(r.features.tense, Some(Tense::PastNarrative));
+    assert_eq!(r.features.person, Some(Person::First));
+    assert_eq!(r.features.number, Some(Number::Singular));
+}
+
+#[test]
 fn verb_present_definite() {
     let r = first_verb("барады");
     assert_eq!(r.lemma, "бар");

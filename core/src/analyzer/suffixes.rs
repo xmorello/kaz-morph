@@ -65,8 +65,19 @@ impl Analyzer {
         results
     }
 
-    pub(super) fn strip_past_definite<'a>(&self, word: &'a str) -> Vec<(&'a str, Option<Tense>)> {
-        self.strip_tense_suffix(word, &["ды", "ді", "ты", "ті"], Tense::PastDefinite)
+    pub(super) fn strip_past_definite<'a>(
+        &self,
+        word: &'a str,
+        person_ending: &str,
+    ) -> Vec<(&'a str, Option<Tense>)> {
+        // Definite past takes short endings. Plural endings agree with the vowel of the past marker.
+        let past_markers: &[&str] = match person_ending {
+            "" | "м" | "ң" => &["ды", "ді", "ты", "ті"],
+            "қ" | "ңдар" => &["ды", "ты"],
+            "к" | "ңдер" => &["ді", "ті"],
+            _ => return Vec::new(),
+        };
+        self.strip_tense_suffix(word, past_markers, Tense::PastDefinite)
     }
 
     pub(super) fn strip_past_narrative<'a>(&self, word: &'a str) -> Vec<(&'a str, Option<Tense>)> {

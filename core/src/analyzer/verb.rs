@@ -8,7 +8,8 @@ impl Analyzer {
         after_person.push((word, None, None));
 
         for (rest0, person, p_number) in &after_person {
-            let mut tense_options = self.strip_past_definite(rest0);
+            let person_ending = &word[rest0.len()..];
+            let mut tense_options = self.strip_past_definite(rest0, person_ending);
             tense_options.extend(self.strip_past_narrative(rest0));
             tense_options.extend(self.strip_past_transitional(rest0));
             tense_options.extend(self.strip_future_indefinite(rest0));
