@@ -1,17 +1,25 @@
+use super::suffixes::{long_person_endings, strip_negation};
 use super::Analyzer;
 use crate::{phonology, types::*};
 
 impl Analyzer {
     pub(super) fn try_verb(&self, word: &str, results: &mut Vec<MorphAnalysis>) {
         self.try_short_agreement(word, results);
+        self.try_present_future(word, results);
 
-        let long_endings = self.strip_long_person(word);
-        for (marked, person, number) in long_endings.into_iter().chain([(word, None, None)]) {
+        let long_endings = long_person_endings().filter_map(|(ending, harmony, person, number)| {
+            let stem = word.strip_suffix(ending)?;
+            (phonology::vowel_group(stem) == Some(harmony)).then_some((
+                stem,
+                Some(person),
+                Some(number),
+            ))
+        });
+        for (marked, person, number) in long_endings.chain([(word, None, None)]) {
             let mut tenses = self.strip_past_narrative(marked);
             tenses.extend(self.strip_past_transitional(marked));
             tenses.extend(self.strip_future_indefinite(marked));
             tenses.extend(self.strip_future_goal(marked));
-            tenses.extend(self.strip_present_definite(marked));
             tenses.extend(self.strip_present_progressive(marked));
             for (stem, tense) in tenses {
                 let features = Features {
@@ -20,7 +28,12 @@ impl Analyzer {
                     tense,
                     ..Features::default()
                 };
-                self.try_verb_stem(word, stem, &features, results);
+                self.try_verb_stem(
+                    stem,
+                    word[stem.len()..].starts_with(phonology::is_vowel),
+                    &features,
+                    results,
+                );
             }
         }
     }
@@ -65,27 +78,32 @@ impl Analyzer {
                             mood,
                             ..Features::default()
                         };
-                        self.try_verb_stem(word, stem, &features, results);
+                        self.try_verb_stem(stem, false, &features, results);
                     }
                 }
             }
         }
     }
 
-    fn try_verb_stem(
+    pub(super) fn try_verb_stem(
         &self,
-        word: &str,
         inflected: &str,
+        vowel_follows: bool,
         features: &Features,
         results: &mut Vec<MorphAnalysis>,
     ) {
-        let negatives = self.strip_negation(inflected);
+        let negatives = strip_negation(inflected).map(|stem| (stem, true));
         for (voiced, negation) in negatives.into_iter().chain([(inflected, false)]) {
             let voices = self.strip_voice(voiced);
             for (stem, voice) in voices.into_iter().chain([(voiced, None)]) {
                 // Stem-final voicing can only be reversed before a vowel, e.g.
                 // жап + ыл in жабылса. Before -са the bare stem is жап.
-                let variants = if word[stem.len()..].starts_with(phonology::is_vowel) {
+                let following = &inflected[stem.len()..];
+                let can_voice = following
+                    .chars()
+                    .next()
+                    .map_or(vowel_follows, phonology::is_vowel);
+                let variants = if can_voice {
                     self.stem_variants(stem)
                 } else {
                     vec![stem.to_owned()]
