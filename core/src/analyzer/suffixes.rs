@@ -65,21 +65,6 @@ impl Analyzer {
         results
     }
 
-    pub(super) fn strip_past_definite<'a>(
-        &self,
-        word: &'a str,
-        person_ending: &str,
-    ) -> Vec<(&'a str, Option<Tense>)> {
-        // Definite past takes short endings. Plural endings agree with the vowel of the past marker.
-        let past_markers: &[&str] = match person_ending {
-            "" | "м" | "ң" => &["ды", "ді", "ты", "ті"],
-            "қ" | "ңдар" => &["ды", "ты"],
-            "к" | "ңдер" => &["ді", "ті"],
-            _ => return Vec::new(),
-        };
-        self.strip_tense_suffix(word, past_markers, Tense::PastDefinite)
-    }
-
     pub(super) fn strip_past_narrative<'a>(&self, word: &'a str) -> Vec<(&'a str, Option<Tense>)> {
         self.strip_tense_suffix(word, &["ған", "ген", "қан", "кен"], Tense::PastNarrative)
     }
@@ -159,16 +144,12 @@ impl Analyzer {
         results
     }
 
-    pub(super) fn strip_person<'a>(&self, word: &'a str) -> Vec<(&'a str, Option<Person>, Option<Number>)> {
+    pub(super) fn strip_long_person<'a>(&self, word: &'a str) -> Vec<(&'a str, Option<Person>, Option<Number>)> {
         let table: &[(&[&str], Person, Number)] = &[
             (&["сыңдар", "сіңдер"], Person::Second, Number::Plural),
-            (&["ңдар", "ңдер"], Person::Second, Number::Plural),
             (&["мыз", "міз"], Person::First, Number::Plural),
             (&["мын", "мін"], Person::First, Number::Singular),
             (&["сың", "сің"], Person::Second, Number::Singular),
-            (&["м"], Person::First, Number::Singular),
-            (&["ң"], Person::Second, Number::Singular),
-            (&["қ", "к"], Person::First, Number::Plural),
         ];
 
         let mut results = Vec::new();

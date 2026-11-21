@@ -67,6 +67,12 @@ pub enum Tense {
     Imperative,        // бар!
 }
 
+/// Grammatical mood expressed by an explicit marker.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Mood {
+    Conditional, // барса
+}
+
 /// Verbal voice.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Voice {
@@ -84,6 +90,7 @@ pub struct Features {
     pub possession: Option<Possession>,
     pub person: Option<Person>,
     pub tense: Option<Tense>,
+    pub mood: Option<Mood>,
     pub voice: Option<Voice>,
     pub negation: bool,
 }
