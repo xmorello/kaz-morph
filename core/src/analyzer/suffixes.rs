@@ -81,10 +81,6 @@ impl Analyzer {
         self.strip_tense_suffix(word, &["мақ", "мек", "бақ", "бек", "пақ", "пек"], Tense::FutureGoal)
     }
 
-    pub(super) fn strip_present_definite<'a>(&self, word: &'a str) -> Vec<(&'a str, Option<Tense>)> {
-        self.strip_tense_suffix(word, &["ады", "еді"], Tense::PresentDefinite)
-    }
-
     pub(super) fn strip_present_progressive<'a>(&self, word: &'a str) -> Vec<(&'a str, Option<Tense>)> {
         self.strip_tense_suffix(word, &["уда", "уде", "юда", "юде"], Tense::PresentProgressive)
     }
@@ -100,20 +96,6 @@ impl Analyzer {
             if let Some(stem) = word.strip_suffix(sfx) {
                 if !stem.is_empty() && phonology::is_valid_suffix(stem, sfx) {
                     results.push((stem, Some(tense)));
-                }
-            }
-        }
-        results
-    }
-
-    pub(super) fn strip_negation<'a>(&self, word: &'a str) -> Vec<(&'a str, bool)> {
-        let suffixes = ["ма", "ме", "ба", "бе", "па", "пе"];
-
-        let mut results = Vec::new();
-        for sfx in suffixes {
-            if let Some(stem) = word.strip_suffix(sfx) {
-                if !stem.is_empty() && phonology::is_valid_suffix(stem, sfx) {
-                    results.push((stem, true));
                 }
             }
         }
@@ -143,25 +125,66 @@ impl Analyzer {
         }
         results
     }
+}
 
-    pub(super) fn strip_long_person<'a>(&self, word: &'a str) -> Vec<(&'a str, Option<Person>, Option<Number>)> {
-        let table: &[(&[&str], Person, Number)] = &[
-            (&["сыңдар", "сіңдер"], Person::Second, Number::Plural),
-            (&["мыз", "міз"], Person::First, Number::Plural),
-            (&["мын", "мін"], Person::First, Number::Singular),
-            (&["сың", "сің"], Person::Second, Number::Singular),
-        ];
+pub(super) fn long_person_endings(
+) -> impl Iterator<Item = (&'static str, phonology::VowelGroup, Person, Number)> {
+    use phonology::VowelGroup::{Back, Front};
+    use Number::{Plural, Singular};
+    use Person::{First, Second, SecondFormal};
 
-        let mut results = Vec::new();
-        for (suffixes, person, number) in table {
-            for sfx in *suffixes {
-                if let Some(stem) = word.strip_suffix(sfx) {
-                    if !stem.is_empty() {
-                        results.push((stem, Some(*person), Some(*number)));
-                    }
-                }
-            }
-        }
-        results
+    [
+        (["мын", "мін"], First, Singular),
+        (["сың", "сің"], Second, Singular),
+        (["сыз", "сіз"], SecondFormal, Singular),
+        (["мыз", "міз"], First, Plural),
+        (["сыңдар", "сіңдер"], Second, Plural),
+        (["сыздар", "сіздер"], SecondFormal, Plural),
+    ]
+    .into_iter()
+    .flat_map(|([back, front], person, number)| {
+        [(back, Back, person, number), (front, Front, person, number)]
+    })
+}
+
+pub(super) fn verb_harmony(stem: &str) -> Option<phonology::VowelGroup> {
+    use phonology::VowelGroup::Back;
+    // жи and қи have a back vowel concealed by the spelling и.
+    if matches!(stem, "жи" | "қи") {
+        return Some(Back);
     }
+    stem.chars()
+        .rev()
+        .find_map(|c| match c {
+            'у' | 'и' => None,
+            'я' => Some(Back),
+            _ => phonology::classify_vowel(c),
+        })
+        .or_else(|| phonology::vowel_group(stem))
+}
+
+pub(super) fn strip_negation(word: &str) -> Option<&str> {
+    ["ма", "ме", "ба", "бе", "па", "пе"]
+        .into_iter()
+        .find_map(|suffix| {
+            let stem = word.strip_suffix(suffix)?;
+            (negative_suffix(stem) == Some(suffix)).then_some(stem)
+        })
+}
+
+fn negative_suffix(stem: &str) -> Option<&'static str> {
+    let endings = match stem.chars().last()? {
+        'м' | 'н' | 'ң' | 'з' | 'ж' => ["ба", "бе"],
+        'б' | 'в' | 'г' | 'д' => ["па", "пе"],
+        c if phonology::classify_consonant(c) == Some(phonology::ConsonantClass::Voiceless) => {
+            ["па", "пе"]
+        }
+        'л' | 'р' | 'й' | 'я' => ["ма", "ме"],
+        c if phonology::is_vowel(c) => ["ма", "ме"],
+        _ => return None,
+    };
+    Some(match verb_harmony(stem)? {
+        phonology::VowelGroup::Back => endings[0],
+        phonology::VowelGroup::Front => endings[1],
+    })
 }

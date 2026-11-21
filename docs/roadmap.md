@@ -10,9 +10,15 @@ Check the paradigm on front- and back-vowel stems, positive and negative forms, 
 
 On the fixed corpus sample below, this change raises verb lemma candidate recall from 814 to 839 of 1,549 tokens (54.2%). It adds a matching lemma on 25 tokens and retains all 814 previous matches.
 
+## Present–future agreement
+
+The finite reading combines -а/-е/-й with a personal ending, including third-person -ды/-ді. For example, `оқиды` recovers `оқы`, and `білмейсіздер` recovers `біл` with negation and polite plural agreement. The current scope is full written forms in isolation. Compare the [Apertium aorist endings](https://github.com/apertium/apertium-kaz/blob/95c6dd0d8536ee69a7058634b03a3e82100b6b6e/apertium-kaz.kaz.lexc#L792-L807) and the [orthographic analysis of сүйемін](https://emle.kz/kz/rule?id=46).
+
+On the same 1,549-token sample, verb lemma candidate recall increases from 839 to 948 (61.2%). All 839 previous matches are retained.
+
 ## Next steps
 
-1. Add present–future agreement and negation, followed by participles, converbs and forms in `-у` with their permitted nominal suffixes. Record independently reviewed positive cases and forbidden readings for each construction.
+1. Add participles, converbs and forms in `-у` with their permitted nominal suffixes. Record independently reviewed positive cases and forbidden readings for each construction.
 2. Preserve the stem variants, continuation classes and phonological annotations needed for the next rules. For reused entries or tables, record the source file, revision, material used, changes and applicable distribution terms. The pinned upstream distribution includes a [GPLv3 license](https://github.com/apertium/apertium-kaz/blob/95c6dd0d8536ee69a7058634b03a3e82100b6b6e/COPYING).
 3. Stabilize the common output schema and default dictionary. Test the installed Python wheel and npm tarball against the same examples. Ship a preview for the documented coverage when the data and packages are ready.
 4. Expand derivation and ranking against held-out data. Add versioned transliteration schemes with explicit treatment of ambiguous conversions.
