@@ -67,6 +67,12 @@ pub enum Tense {
     Imperative,        // бар!
 }
 
+/// Nonfinite form of a verb.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum VerbForm {
+    PastParticiple,
+}
+
 /// Grammatical mood expressed by an explicit marker.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Mood {
@@ -90,6 +96,7 @@ pub struct Features {
     pub possession: Option<Possession>,
     pub person: Option<Person>,
     pub tense: Option<Tense>,
+    pub verb_form: Option<VerbForm>,
     pub mood: Option<Mood>,
     pub voice: Option<Voice>,
     pub negation: bool,

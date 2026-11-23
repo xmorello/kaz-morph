@@ -2,6 +2,43 @@ use crate::types::*;
 use crate::phonology;
 use super::Analyzer;
 
+const LOCATIVE: &[&str] = &["да", "де", "та", "те"];
+const PLURAL: &[&str] = &["лар", "лер", "дар", "дер", "тар", "тер"];
+
+fn strip_nominal_suffix<'a>(word: &'a str, suffix: &str) -> Option<&'a str> {
+    let stem = word.strip_suffix(suffix)?;
+    (!stem.is_empty() && phonology::is_valid_suffix(stem, suffix)).then_some(stem)
+}
+
+pub(super) fn strip_plural(word: &str) -> Option<&str> {
+    PLURAL.iter().find_map(|s| strip_nominal_suffix(word, s))
+}
+
+pub(super) fn strip_locative(word: &str) -> Option<&str> {
+    LOCATIVE.iter().find_map(|s| strip_nominal_suffix(word, s))
+}
+
+pub(super) fn strip_gan(word: &str) -> Option<&str> {
+    use phonology::VowelGroup::{Back, Front};
+
+    let markers = [
+        ("ған", Back, false),
+        ("ген", Front, false),
+        ("қан", Back, true),
+        ("кен", Front, true),
+    ];
+    markers
+        .into_iter()
+        .find_map(|(suffix, harmony, after_voiceless)| {
+            let stem = word.strip_suffix(suffix)?;
+            if verb_harmony(stem)? != harmony {
+                return None;
+            }
+            let voiceless = takes_voiceless_suffix(stem.chars().next_back()?);
+            (voiceless == after_voiceless).then_some(stem)
+        })
+}
+
 #[allow(clippy::unused_self)]
 impl Analyzer {
     pub(super) fn strip_case<'a>(&self, word: &'a str) -> Vec<(&'a str, Option<Case>)> {
@@ -10,18 +47,16 @@ impl Analyzer {
             (&["мен", "бен", "пен"], Case::Instrumental),
             (&["ның", "нің", "дың", "дің", "тың", "тің"], Case::Genitive),
             (&["дан", "ден", "тан", "тен", "нан", "нен"], Case::Ablative),
-            (&["да", "де", "та", "те"], Case::Locative),
+            (LOCATIVE, Case::Locative),
             (&["ға", "ге", "қа", "ке", "на", "не"], Case::Dative),
             (&["ны", "ні", "ды", "ді", "ты", "ті"], Case::Accusative),
         ];
 
         let mut results = Vec::new();
         for (suffixes, case) in table {
-            for sfx in *suffixes {
-                if let Some(stem) = word.strip_suffix(sfx) {
-                    if !stem.is_empty() && phonology::is_valid_suffix(stem, sfx) {
-                        results.push((stem, Some(*case)));
-                    }
+            for suffix in *suffixes {
+                if let Some(stem) = strip_nominal_suffix(word, suffix) {
+                    results.push((stem, Some(*case)));
                 }
             }
         }
@@ -49,24 +84,6 @@ impl Analyzer {
             }
         }
         results
-    }
-
-    pub(super) fn strip_plural<'a>(&self, word: &'a str) -> Vec<(&'a str, Option<Number>)> {
-        let suffixes = ["лар", "лер", "дар", "дер", "тар", "тер"];
-
-        let mut results = Vec::new();
-        for sfx in suffixes {
-            if let Some(stem) = word.strip_suffix(sfx) {
-                if !stem.is_empty() && phonology::is_valid_suffix(stem, sfx) {
-                    results.push((stem, Some(Number::Plural)));
-                }
-            }
-        }
-        results
-    }
-
-    pub(super) fn strip_past_narrative<'a>(&self, word: &'a str) -> Vec<(&'a str, Option<Tense>)> {
-        self.strip_tense_suffix(word, &["ған", "ген", "қан", "кен"], Tense::PastNarrative)
     }
 
     pub(super) fn strip_past_transitional<'a>(&self, word: &'a str) -> Vec<(&'a str, Option<Tense>)> {
@@ -172,13 +189,15 @@ pub(super) fn strip_negation(word: &str) -> Option<&str> {
         })
 }
 
+fn takes_voiceless_suffix(last: char) -> bool {
+    matches!(last, 'б' | 'в' | 'г' | 'д')
+        || phonology::classify_consonant(last) == Some(phonology::ConsonantClass::Voiceless)
+}
+
 fn negative_suffix(stem: &str) -> Option<&'static str> {
     let endings = match stem.chars().last()? {
         'м' | 'н' | 'ң' | 'з' | 'ж' => ["ба", "бе"],
-        'б' | 'в' | 'г' | 'д' => ["па", "пе"],
-        c if phonology::classify_consonant(c) == Some(phonology::ConsonantClass::Voiceless) => {
-            ["па", "пе"]
-        }
+        c if takes_voiceless_suffix(c) => ["па", "пе"],
         'л' | 'р' | 'й' | 'я' => ["ма", "ме"],
         c if phonology::is_vowel(c) => ["ма", "ме"],
         _ => return None,

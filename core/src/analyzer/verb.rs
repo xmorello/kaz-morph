@@ -1,4 +1,6 @@
-use super::suffixes::{long_person_endings, strip_negation};
+use super::suffixes::{
+    long_person_endings, strip_gan, strip_locative, strip_negation, strip_plural,
+};
 use super::Analyzer;
 use crate::{phonology, types::*};
 
@@ -16,7 +18,10 @@ impl Analyzer {
             ))
         });
         for (marked, person, number) in long_endings.chain([(word, None, None)]) {
-            let mut tenses = self.strip_past_narrative(marked);
+            let mut tenses = Vec::new();
+            if let Some(stem) = strip_gan(marked) {
+                tenses.push((stem, Some(Tense::PastNarrative)));
+            }
             tenses.extend(self.strip_past_transitional(marked));
             tenses.extend(self.strip_future_indefinite(marked));
             tenses.extend(self.strip_future_goal(marked));
@@ -35,6 +40,22 @@ impl Analyzer {
                     results,
                 );
             }
+        }
+        self.try_past_participle(word, results);
+    }
+
+    fn try_past_participle(&self, word: &str, results: &mut Vec<MorphAnalysis>) {
+        let before_locative = strip_locative(word);
+        let before_case = before_locative.unwrap_or(word);
+        let before_plural = strip_plural(before_case);
+        if let Some(stem) = strip_gan(before_plural.unwrap_or(before_case)) {
+            let features = Features {
+                number: before_plural.map(|_| Number::Plural),
+                case: before_locative.map(|_| Case::Locative),
+                verb_form: Some(VerbForm::PastParticiple),
+                ..Features::default()
+            };
+            self.try_verb_stem(stem, false, &features, results);
         }
     }
 

@@ -16,9 +16,15 @@ The finite reading combines -а/-е/-й with a personal ending, including third-
 
 On the same 1,549-token sample, verb lemma candidate recall increases from 839 to 948 (61.2%). All 839 previous matches are retained.
 
+## Past participles
+
+`барған` has two verb readings, finite `PastNarrative` and nonfinite `verb_form = PastParticiple`. The participle takes an optional plural suffix followed by an optional locative suffix. For example, `келгенде` has a verbal reading from `кел` alongside the dictionary noun `келген`. Voice and negation apply before the participle marker. [Apertium participle and nominalization rules](https://github.com/apertium/apertium-kaz/blob/95c6dd0d8536ee69a7058634b03a3e82100b6b6e/apertium-kaz.kaz.lexc#L965-L983)
+
+Verb lemma candidate recall on the same sample increases from 948 to 965 of 1,549 tokens (62.3%). The 17 additional matches include 16 locatives and one plural.
+
 ## Next steps
 
-1. Add participles, converbs and forms in `-у` with their permitted nominal suffixes. Record independently reviewed positive cases and forbidden readings for each construction.
+1. Add converbs on -ып/-іп/-п and forms in `-у`. Extend nominal inflection and coverage of the remaining participle classes with positive cases and forbidden readings for each construction.
 2. Preserve the stem variants, continuation classes and phonological annotations needed for the next rules. For reused entries or tables, record the source file, revision, material used, changes and applicable distribution terms. The pinned upstream distribution includes a [GPLv3 license](https://github.com/apertium/apertium-kaz/blob/95c6dd0d8536ee69a7058634b03a3e82100b6b6e/COPYING).
 3. Stabilize the common output schema and default dictionary. Test the installed Python wheel and npm tarball against the same examples. Ship a preview for the documented coverage when the data and packages are ready.
 4. Expand derivation and ranking against held-out data. Add versioned transliteration schemes with explicit treatment of ambiguous conversions.
