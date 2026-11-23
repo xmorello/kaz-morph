@@ -42,6 +42,7 @@ fn print_features(f: &kaz_morph::Features) {
     if let Some(c) = &f.case       { println!("     case:       {c:?}"); }
     if let Some(p) = &f.possession { println!("     possession: {p:?}"); }
     if let Some(t) = &f.tense      { println!("     tense:      {t:?}"); }
+    if let Some(v) = &f.verb_form  { println!("     verb_form:  {v:?}"); }
     if let Some(m) = &f.mood       { println!("     mood:       {m:?}"); }
     if let Some(p) = &f.person     { println!("     person:     {p:?}"); }
     if f.negation                   { println!("     negation:   true"); }

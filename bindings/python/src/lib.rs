@@ -17,6 +17,8 @@ struct MorphResult {
     #[pyo3(get)]
     tense: Option<String>,
     #[pyo3(get)]
+    verb_form: Option<String>,
+    #[pyo3(get)]
     mood: Option<String>,
     #[pyo3(get)]
     voice: Option<String>,
@@ -63,6 +65,7 @@ impl Analyzer {
                 number: r.features.number.map(|n| format!("{n:?}")),
                 possession: r.features.possession.map(|p| format!("{p:?}")),
                 tense: r.features.tense.map(|t| format!("{t:?}")),
+                verb_form: r.features.verb_form.map(|f| format!("{f:?}")),
                 mood: r.features.mood.map(|m| format!("{m:?}")),
                 voice: r.features.voice.map(|v| format!("{v:?}")),
                 person: r.features.person.map(|p| format!("{p:?}")),

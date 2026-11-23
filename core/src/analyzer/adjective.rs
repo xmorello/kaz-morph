@@ -1,5 +1,5 @@
 use crate::types::*;
-use super::Analyzer;
+use super::{suffixes::strip_plural, Analyzer};
 
 impl Analyzer {
     pub(super) fn try_adjective(&self, word: &str, results: &mut Vec<MorphAnalysis>) {
@@ -13,11 +13,8 @@ impl Analyzer {
             after_poss.push((rest1, None));
 
             for (rest2, poss) in &after_poss {
-                let plural_options = self.strip_plural(rest2);
-                let mut after_plural: Vec<(&str, Option<Number>)> = plural_options;
-                after_plural.push((rest2, None));
-
-                for (stem, number) in &after_plural {
+                let plural = strip_plural(rest2).map(|stem| (stem, Some(Number::Plural)));
+                for (stem, number) in plural.into_iter().chain([(*rest2, None)]) {
                     if stem.is_empty() { continue; }
                     if let Some(entries) = self.lexicon.lookup(stem) {
                         for e in entries {
@@ -25,7 +22,7 @@ impl Analyzer {
                                 continue;
                             }
                             let features = Features {
-                                number: *number,
+                                number,
                                 case: *case,
                                 possession: *poss,
                                 ..Default::default()
