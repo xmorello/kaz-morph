@@ -76,6 +76,9 @@ impl Lexicon {
             "көз",    // глаз
             "қала",   // город
             "қол",    // рука
+            "қап",    // мешок
+            "кеп",    // облик
+            "сап",    // строй
             "мектеп", // школа
             "су",     // вода
             "тау",    // гора
@@ -116,6 +119,8 @@ impl Lexicon {
             "отыр",  // сидеть
             "тұр",   // стоять
             "жат",   // лежать
+            "бол", "жап", "жау", "кеп", "істе", "қал", "қап", "қорық", "қыл",
+            "сал", "сеп", "сөйле", "тан", "таны", "тап", "теп", "шап",
         ];
         for stem in verbs {
             lex.insert(stem, Pos::Verb);
@@ -161,7 +166,25 @@ impl Lexicon {
             lex.insert(stem, Pos::Pronoun);
         }
 
+        lex.add_supplement();
         lex
+    }
+
+    pub(crate) fn add_supplement(&mut self) {
+        for (lemma, pos) in [
+            ("де", Pos::Verb),
+            ("оп", Pos::Verb),
+            ("өп", Pos::Verb),
+            ("үрік", Pos::Verb),
+            ("қап", Pos::Interjection),
+        ] {
+            let known = self
+                .lookup(lemma)
+                .is_some_and(|entries| entries.iter().any(|entry| entry.pos == pos));
+            if !known {
+                self.insert(lemma, pos);
+            }
+        }
     }
 
     /// load lexicon from a TSV file (lemma\tPos).

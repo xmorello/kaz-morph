@@ -59,7 +59,7 @@ pub enum Person {
 pub enum Tense {
     PastDefinite,      // барды
     PastNarrative,     // барған
-    PastTransitional,  // барып
+    PastTransitional,  // барыпсың
     PresentDefinite,   // барады
     PresentProgressive,// барда
     FutureIndefinite,  // барар
@@ -71,6 +71,7 @@ pub enum Tense {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum VerbForm {
     PastParticiple,
+    Converb,           // барып, сөйлеп
 }
 
 /// Grammatical mood expressed by an explicit marker.
