@@ -328,17 +328,19 @@ fn verb_past_narrative_negative() {
 }
 
 #[test]
-fn verb_past_transitional() {
+fn verb_converb_back() {
     let r = first_verb("барып");
     assert_eq!(r.lemma, "бар");
-    assert_eq!(r.features.tense, Some(Tense::PastTransitional));
+    assert_eq!(r.features.verb_form, Some(VerbForm::Converb));
+    assert_eq!(r.features.tense, None);
 }
 
 #[test]
-fn verb_past_transitional_front() {
+fn verb_converb_front() {
     let r = first_verb("келіп");
     assert_eq!(r.lemma, "кел");
-    assert_eq!(r.features.tense, Some(Tense::PastTransitional));
+    assert_eq!(r.features.verb_form, Some(VerbForm::Converb));
+    assert_eq!(r.features.tense, None);
 }
 
 #[test]

@@ -2,6 +2,7 @@ mod noun;
 mod verb;
 mod present_future;
 mod adjective;
+mod converb;
 mod suffixes;
 
 use crate::irregular;
@@ -32,6 +33,7 @@ impl Analyzer {
             lexicon.insert(stem, Pos::Pronoun);
         }
 
+        lexicon.add_supplement();
         Self { lexicon }
     }
 
@@ -86,10 +88,18 @@ impl Analyzer {
             }
         }
 
-        results.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
-        results.dedup_by(|a, b| {
-            a.lemma == b.lemma && a.pos == b.pos && a.features == b.features
-        });
+        results.sort_by(|a, b| b.score.total_cmp(&a.score));
+        // Multiple paths may assign different scores to the same reading.
+        for i in (1..results.len()).rev() {
+            let candidate = &results[i];
+            if results[..i].iter().any(|prior| {
+                prior.lemma == candidate.lemma
+                    && prior.pos == candidate.pos
+                    && prior.features == candidate.features
+            }) {
+                results.remove(i);
+            }
+        }
 
         results
     }

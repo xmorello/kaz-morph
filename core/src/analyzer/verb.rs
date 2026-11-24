@@ -22,7 +22,9 @@ impl Analyzer {
             if let Some(stem) = strip_gan(marked) {
                 tenses.push((stem, Some(Tense::PastNarrative)));
             }
-            tenses.extend(self.strip_past_transitional(marked));
+            if person.is_some() {
+                tenses.extend(self.strip_past_transitional(marked));
+            }
             tenses.extend(self.strip_future_indefinite(marked));
             tenses.extend(self.strip_future_goal(marked));
             tenses.extend(self.strip_present_progressive(marked));
@@ -42,6 +44,7 @@ impl Analyzer {
             }
         }
         self.try_past_participle(word, results);
+        self.try_converb(word, results);
     }
 
     fn try_past_participle(&self, word: &str, results: &mut Vec<MorphAnalysis>) {
@@ -115,36 +118,66 @@ impl Analyzer {
     ) {
         let negatives = strip_negation(inflected).map(|stem| (stem, true));
         for (voiced, negation) in negatives.into_iter().chain([(inflected, false)]) {
-            let voices = self.strip_voice(voiced);
-            for (stem, voice) in voices.into_iter().chain([(voiced, None)]) {
-                // Stem-final voicing can only be reversed before a vowel, e.g.
-                // жап + ыл in жабылса. Before -са the bare stem is жап.
-                let following = &inflected[stem.len()..];
-                let can_voice = following
-                    .chars()
-                    .next()
-                    .map_or(vowel_follows, phonology::is_vowel);
-                let variants = if can_voice {
-                    self.stem_variants(stem)
-                } else {
-                    vec![stem.to_owned()]
-                };
-                for variant in variants {
-                    if let Some(entries) = self.lexicon.lookup(&variant) {
-                        for entry in entries.iter().filter(|e| e.pos == Pos::Verb) {
-                            results.push(MorphAnalysis {
-                                lemma: entry.lemma.clone(),
-                                pos: Pos::Verb,
-                                features: Features {
-                                    voice,
-                                    negation,
-                                    ..features.clone()
-                                },
-                                score: 0.6,
-                            });
-                        }
-                    }
+            let features = Features {
+                negation,
+                ..features.clone()
+            };
+            self.try_verb_voice(voiced, !negation && vowel_follows, &features, results);
+        }
+    }
+
+    pub(super) fn try_verb_voice(
+        &self,
+        base: &str,
+        vowel_follows: bool,
+        features: &Features,
+        results: &mut Vec<MorphAnalysis>,
+    ) {
+        if base == "делін" {
+            let passive = Features {
+                voice: Some(Voice::Passive),
+                ..features.clone()
+            };
+            self.push_verb_reading("де", &passive, results);
+        }
+        let voices = self.strip_voice(base);
+        for (stem, voice) in voices.into_iter().chain([(base, None)]) {
+            if voice == Some(Voice::Passive) && stem == "де" {
+                continue; // The passive stem of де is делін.
+            }
+            let following = &base[stem.len()..];
+            let can_voice = following
+                .chars()
+                .next()
+                .map_or(vowel_follows, phonology::is_vowel);
+            let features = Features {
+                voice,
+                ..features.clone()
+            };
+            if can_voice {
+                for variant in self.stem_variants(stem) {
+                    self.push_verb_reading(&variant, &features, results);
                 }
+            } else {
+                self.push_verb_reading(stem, &features, results);
+            }
+        }
+    }
+
+    pub(super) fn push_verb_reading(
+        &self,
+        stem: &str,
+        features: &Features,
+        results: &mut Vec<MorphAnalysis>,
+    ) {
+        if let Some(entries) = self.lexicon.lookup(stem) {
+            for entry in entries.iter().filter(|e| e.pos == Pos::Verb) {
+                results.push(MorphAnalysis {
+                    lemma: entry.lemma.clone(),
+                    pos: Pos::Verb,
+                    features: features.clone(),
+                    score: 0.6,
+                });
             }
         }
     }
