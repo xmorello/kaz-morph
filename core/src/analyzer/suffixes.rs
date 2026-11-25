@@ -134,13 +134,28 @@ impl Analyzer {
         for (suffixes, voice) in table {
             for sfx in *suffixes {
                 if let Some(stem) = word.strip_suffix(sfx) {
-                    if !stem.is_empty() && phonology::is_valid_suffix(stem, sfx) {
+                    if valid_voice_suffix(stem, sfx, *voice) {
                         results.push((stem, Some(*voice)));
                     }
                 }
             }
         }
         results
+    }
+}
+
+fn valid_voice_suffix(stem: &str, suffix: &str, voice: Voice) -> bool {
+    let Some(last) = stem.chars().next_back() else {
+        return false;
+    };
+    if voice == Voice::Causative {
+        return phonology::is_valid_suffix(stem, suffix);
+    }
+    let ends_in_vowel = last == 'я' || (phonology::is_vowel(last) && !matches!(last, 'и' | 'у'));
+    match suffix.chars().next() {
+        Some('ы') => !ends_in_vowel && verb_harmony(stem) == Some(phonology::VowelGroup::Back),
+        Some('і') => !ends_in_vowel && verb_harmony(stem) == Some(phonology::VowelGroup::Front),
+        _ => ends_in_vowel,
     }
 }
 
@@ -162,6 +177,30 @@ pub(super) fn long_person_endings(
     .flat_map(|([back, front], person, number)| {
         [(back, Back, person, number), (front, Front, person, number)]
     })
+}
+
+// Stem spellings before vowel suffixes. Keep the lexical root for lookup.
+pub(super) const VOWEL_DROP: &[(&str, &str)] =
+    &[("қорқ", "қорық"), ("үрк", "үрік"), ("таус", "тауыс")];
+
+pub(super) fn stems_before_vowel(surface: &str) -> impl Iterator<Item = std::borrow::Cow<'_, str>> {
+    use std::borrow::Cow;
+    let mut chars = surface.char_indices().rev();
+    let last = chars.next();
+    let after_vowel = chars.next().is_some_and(|(_, c)| phonology::is_vowel(c));
+    let stop_voices =
+        after_vowel && last.is_some_and(|(_, c)| phonology::devoiced_to_voiced(c).is_some());
+    let literal = (!surface.is_empty() && !stop_voices).then_some(Cow::Borrowed(surface));
+    let restored = last.and_then(|(offset, c)| {
+        if !after_vowel {
+            return None;
+        }
+        let stop = phonology::voiced_to_devoiced(c)?;
+        let mut stem = surface[..offset].to_owned();
+        stem.push(stop);
+        Some(Cow::Owned(stem))
+    });
+    literal.into_iter().chain(restored)
 }
 
 pub(super) fn verb_harmony(stem: &str) -> Option<phonology::VowelGroup> {

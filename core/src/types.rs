@@ -72,6 +72,7 @@ pub enum Tense {
 pub enum VerbForm {
     PastParticiple,
     Converb,           // барып, сөйлеп
+    VerbalNoun,        // бару, келуге
 }
 
 /// Grammatical mood expressed by an explicit marker.
