@@ -1,5 +1,6 @@
 use super::suffixes::{
-    long_person_endings, strip_gan, strip_locative, strip_negation, strip_plural,
+    long_person_endings, stems_before_vowel, strip_gan, strip_locative, strip_negation,
+    strip_plural,
 };
 use super::Analyzer;
 use crate::{phonology, types::*};
@@ -45,6 +46,7 @@ impl Analyzer {
         }
         self.try_past_participle(word, results);
         self.try_converb(word, results);
+        self.try_verbal_noun(word, results);
     }
 
     fn try_past_participle(&self, word: &str, results: &mut Vec<MorphAnalysis>) {
@@ -155,7 +157,7 @@ impl Analyzer {
                 ..features.clone()
             };
             if can_voice {
-                for variant in self.stem_variants(stem) {
+                for variant in stems_before_vowel(stem) {
                     self.push_verb_reading(&variant, &features, results);
                 }
             } else {

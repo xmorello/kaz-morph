@@ -1,4 +1,4 @@
-use super::suffixes::verb_harmony;
+use super::suffixes::{stems_before_vowel, verb_harmony, VOWEL_DROP};
 use super::Analyzer;
 use crate::phonology::{self, VowelGroup};
 use crate::types::{Features, MorphAnalysis, VerbForm};
@@ -12,9 +12,6 @@ const ALTERNATIONS: &[(&str, &str)] = &[
     ("сеуіп", "сеп"),
     ("шауып", "шап"),
     ("қауып", "қап"),
-    ("қорқып", "қорық"),
-    ("үркіп", "үрік"),
-    ("таусып", "тауыс"),
 ];
 
 // Additional spellings coexist with the regular forms.
@@ -44,35 +41,34 @@ impl Analyzer {
             }
         }
 
+        let long = before_p
+            .strip_suffix('ы')
+            .map(|s| (s, VowelGroup::Back))
+            .or_else(|| before_p.strip_suffix('і').map(|s| (s, VowelGroup::Front)));
+        let long_stem = long
+            .filter(|(stem, harmony)| verb_harmony(stem) == Some(*harmony))
+            .map(|(stem, _)| stem);
+        if let Some(stem) = long_stem {
+            for &(short, lemma) in VOWEL_DROP {
+                if stem == short {
+                    self.push_verb_reading(lemma, &features, results);
+                }
+            }
+        }
         // таны-п and тан-ып have different stems but the same surface.
         if before_p.chars().next_back().is_some_and(vowel_before_p) {
             self.try_verb_voice(before_p, false, &features, results);
         }
-        let (stem, harmony) = if let Some(stem) = before_p.strip_suffix('ы') {
-            (stem, VowelGroup::Back)
-        } else if let Some(stem) = before_p.strip_suffix('і') {
-            (stem, VowelGroup::Front)
-        } else {
+        let Some(stem) = long_stem else { return };
+        let Some(last) = stem.chars().next_back() else {
             return;
         };
-        let mut chars = stem.chars().rev();
-        let Some(last) = chars.next() else { return };
-        if vowel_before_p(last) || verb_harmony(stem) != Some(harmony) {
+        if vowel_before_p(last) {
             return;
         }
-        let after_vowel = chars.next().is_some_and(phonology::is_vowel);
-        let stop_voices = after_vowel && phonology::devoiced_to_voiced(last).is_some();
-        if !stop_voices && !has_alternation(stem) {
-            self.try_verb_voice(stem, false, &features, results);
-        }
-        if after_vowel {
-            if let Some(stop) = phonology::voiced_to_devoiced(last) {
-                let mut restored = stem.to_owned();
-                restored.pop();
-                restored.push(stop);
-                if !has_alternation(&restored) {
-                    self.push_verb_reading(&restored, &features, results);
-                }
+        for base in stems_before_vowel(stem) {
+            if !has_alternation(&base) {
+                self.try_verb_voice(&base, false, &features, results);
             }
         }
     }
@@ -83,5 +79,8 @@ fn vowel_before_p(c: char) -> bool {
 }
 
 fn has_alternation(stem: &str) -> bool {
-    ALTERNATIONS.iter().any(|&(_, lemma)| lemma == stem)
+    ALTERNATIONS
+        .iter()
+        .chain(VOWEL_DROP)
+        .any(|&(_, lemma)| lemma == stem)
 }
