@@ -14,7 +14,7 @@ Kazakh is agglutinative. Grammar is encoded as chains of suffixes on a single ro
 жүректерімізде
   жүрек  +  тер  +  іміз  +  де
   heart     PL      our      in
-  -> "in our hearts"
+  // "in our hearts"
 ```
 
 For a computer, `жүрек` and `жүректерімізде` are unrelated strings, and a spellchecker can't tell whether a five-suffix chain follows vowel harmony or breaks it. On top of that, an NLP pipeline has no idea that `барды`, `бармады`, and `барғандар` are all forms of `бару`.
@@ -35,7 +35,7 @@ use kaz_morph::Analyzer;
 
 let analyzer = Analyzer::full();
 let results = analyzer.analyze("мұғалімдерімізге");
-// will return --> lemma: "мұғалім", pos: Noun, number: Plural, possession: P1Pl, case: Dative
+// will return: lemma: "мұғалім", pos: Noun, number: Plural, possession: P1Pl, case: Dative
 ```
 
 ## Features
