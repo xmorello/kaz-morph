@@ -53,6 +53,30 @@ fn bare_noun() {
 }
 
 #[test]
+fn zhau_keeps_noun_and_verb_readings() {
+    for analyzer in [Analyzer::new(), Analyzer::full()] {
+        for (word, case, tense) in [
+            ("жау", None, None),
+            ("жауды", Some(Case::Accusative), Some(Tense::PastDefinite)),
+        ] {
+            let readings = analyzer.analyze(word);
+            assert!(
+                readings.iter().any(|r| {
+                    r.lemma == "жау" && r.pos == Pos::Noun && r.features.case == case
+                }),
+                "missing noun reading for {word}: {readings:?}"
+            );
+            assert!(
+                readings.iter().any(|r| {
+                    r.lemma == "жау" && r.pos == Pos::Verb && r.features.tense == tense
+                }),
+                "missing verb reading for {word}: {readings:?}"
+            );
+        }
+    }
+}
+
+#[test]
 fn locative() {
     let r = first_noun("мектепте");
     assert_eq!(r.lemma, "мектеп");
